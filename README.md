@@ -6,7 +6,7 @@ It accepts patient-level CSV files, calculates deterministic subgroup metrics, p
 
 ## CSV format
 
-The application expects one binary observed-outcome column (`0` or `1`), one predicted-probability column (between `0` and `1`), and one or more population columns such as sex, age band, race, or pre-existing disease. A reproducible synthetic cardiovascular dataset is loaded automatically.
+The application expects one binary observed-outcome column (`0` or `1`), one predicted-probability column (between `0` and `1`), and one or more population columns such as sex, age band, race, or pre-existing disease. A reproducible synthetic cardiovascular dataset is loaded automatically. It includes separate 5-year atrial-fibrillation/CHARGE-AF and 10-year ASCVD/PCE demonstrations.
 
 Users explicitly choose the privileged/reference and underprivileged/comparison populations. Directional gaps are calculated as `comparison - reference`. Attributes can include race or ethnicity, sex or gender, age, comorbidity, poverty or deprivation, geography, and native-English language status. A second attribute can be added for intersectional analysis.
 
@@ -21,6 +21,8 @@ Users explicitly choose the privileged/reference and underprivileged/comparison 
 - Statistical parity, true-positive-rate, and true-negative-rate differences against a defined reference group
 
 Metrics are suppressed when a subgroup contains fewer than 30 records. Missing and unknown attribute values remain visible for data-quality review.
+
+The population-profile view shows normalized histograms for numeric covariates and proportional distributions for categorical covariates and outcomes. Demonstration fields include age, BMI, blood pressure, total and HDL cholesterol, smoking, diabetes, hypertension, blood-pressure treatment, heart failure, prior myocardial infarction, language, deprivation quintile, and rural/urban location.
 
 ## Scientific foundation
 
