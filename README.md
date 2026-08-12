@@ -2,6 +2,8 @@
 
 Cardio Risk Compass is a browser-based research prototype for auditing clinical risk-model performance and fairness across patient populations.
 
+**Live application:** https://dbbun.github.io/cardio-risk-compass/
+
 It accepts patient-level CSV files, calculates deterministic subgroup metrics, presents paper-inspired comparisons, explains potential reliability and fairness concerns in clear language, and suggests mitigation experiments.
 
 ## CSV format
@@ -38,5 +40,14 @@ This is an evaluation and governance prototype, not a medical device. Metrics ar
 npm install
 npm run dev
 ```
+
+For the static GitHub Pages build:
+
+```bash
+npm run build:pages
+npm run preview:pages
+```
+
+Every push to `main` deploys the browser-only application through GitHub Actions. CSV processing and analysis remain entirely in the visitor's browser.
 
 Copyright DBbun LLC. A public-use license will be selected before release.
