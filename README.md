@@ -8,7 +8,7 @@ It accepts patient-level CSV files, calculates deterministic subgroup metrics, p
 
 ## CSV format
 
-The application expects one binary observed-outcome column (`0` or `1`), one predicted-probability column (between `0` and `1`), and one or more population columns such as sex, age band, race, or pre-existing disease. A reproducible synthetic cardiovascular dataset is loaded automatically. It includes separate 5-year atrial-fibrillation/CHARGE-AF and 10-year ASCVD/PCE demonstrations.
+The application expects one binary observed-outcome column (`0` or `1`), one predicted-probability column (between `0` and `1`), and one or more population columns such as sex, age band, race, or pre-existing disease. A reproducible synthetic cardiovascular dataset with 50,000 patients is loaded automatically. It includes separate 5-year atrial-fibrillation/CHARGE-AF and 10-year atherosclerotic-cardiovascular-disease/Pooled-Cohort-Equations demonstrations.
 
 Users explicitly choose the privileged/reference and underprivileged/comparison populations. Directional gaps are calculated as `comparison - reference`. Attributes can include race or ethnicity, sex or gender, age, comorbidity, poverty or deprivation, geography, and native-English language status. A second attribute can be added for intersectional analysis.
 
@@ -31,7 +31,7 @@ Metrics are suppressed when a subgroup contains fewer than 30 records. Missing a
 
 The population-profile view shows normalized histograms for numeric covariates and proportional distributions for categorical covariates and outcomes. Demonstration fields include age, BMI, blood pressure, total and HDL cholesterol, smoking, diabetes, hypertension, blood-pressure treatment, heart failure, prior myocardial infarction, language, deprivation quintile, and rural/urban location.
 
-The in-app CSV guide documents the minimum schema and provides a downloadable full example. Column names are flexible because users explicitly map the observed outcome, predicted probability, fairness attribute, and optional intersection after upload.
+The in-app CSV guide documents the minimum schema and provides a downloadable full example. A paginated data viewer lets users inspect the active CSV directly in the browser. Column names are flexible; the tool detects and offers only binary columns for the observed outcome, probability-like columns for the risk score, and categorical population fields for fairness attributes and intersections.
 
 ## Scientific foundation
 
