@@ -1,0 +1,78 @@
+"use client";
+
+import { ChangeEvent, useMemo, useRef, useState } from "react";
+
+type Row = Record<string, string>;
+type MetricRow = { group:string; n:number; prevalence:number; auc:number|null; sensitivity:number|null; specificity:number|null; positiveRate:number; brier:number; oeRatio:number|null };
+const COLORS = ["#f06d45", "#2c7a78", "#5b67b0", "#b05f84", "#8a6f38", "#557c3e"];
+
+function seededRandom(seed:number) { let value=seed>>>0; return () => { value=(value*1664525+1013904223)>>>0; return value/4294967296; }; }
+function syntheticRows():Row[] {
+  const random=seededRandom(20260812), rows:Row[]=[];
+  for(let i=0;i<960;i+=1){
+    const sex=i%2===0?"Female":"Male", ageBand=["45-54","55-64","65-74","75+"][i%4], ageBase=[50,60,69,80][i%4];
+    const age=ageBase+Math.floor(random()*7)-3, diabetes=random()<.2?1:0, hypertension=random()<.38?1:0;
+    const trueRisk=Math.min(.78,Math.max(.02,.025+(age-45)*.009+diabetes*.11+hypertension*.08));
+    const outcome=random()<trueRisk?1:0, sexBias=sex==="Female"&&ageBand==="65-74"?-.13:sex==="Male"?.025:-.015;
+    const ageNoise=ageBand==="75+"?(random()-.5)*.34:(random()-.5)*.16;
+    const score=Math.min(.96,Math.max(.01,trueRisk+sexBias+ageNoise));
+    rows.push({patient_id:`SYN-${String(i+1).padStart(4,"0")}`,outcome:String(outcome),predicted_risk:score.toFixed(4),sex,age_band:ageBand,diabetes:diabetes?"Yes":"No",hypertension:hypertension?"Yes":"No"});
+  }
+  return rows;
+}
+
+function parseCsv(text:string):Row[]{
+  const records:string[][]=[]; let record:string[]=[],field="",quoted=false;
+  for(let i=0;i<text.length;i+=1){const char=text[i]; if(char==='"'){if(quoted&&text[i+1]==='"'){field+='"';i+=1}else quoted=!quoted;} else if(char===","&&!quoted){record.push(field.trim());field="";} else if((char==="\n"||char==="\r")&&!quoted){if(char==="\r"&&text[i+1]==="\n")i+=1;record.push(field.trim());field="";if(record.some(Boolean))records.push(record);record=[];}else field+=char;}
+  record.push(field.trim()); if(record.some(Boolean))records.push(record); if(records.length<2)throw new Error("The CSV needs a header and at least one data row.");
+  const headers=records[0].map(h=>h.replace(/^\uFEFF/,"")); if(new Set(headers).size!==headers.length)throw new Error("Column names must be unique.");
+  return records.slice(1).map(values=>Object.fromEntries(headers.map((header,index)=>[header,values[index]??""])));
+}
+
+function auc(scores:number[],outcomes:number[]){
+  const pairs=scores.map((score,i)=>({score,outcome:outcomes[i]})).sort((a,b)=>a.score-b.score), positives=outcomes.reduce((s,v)=>s+v,0), negatives=outcomes.length-positives;
+  if(!positives||!negatives)return null; let rankSum=0;
+  for(let i=0;i<pairs.length;){let j=i+1;while(j<pairs.length&&pairs[j].score===pairs[i].score)j+=1;const rank=(i+1+j)/2;for(let k=i;k<j;k+=1)if(pairs[k].outcome===1)rankSum+=rank;i=j;}
+  return (rankSum-positives*(positives+1)/2)/(positives*negatives);
+}
+function metricsFor(rows:Row[],groupColumn:string,outcomeColumn:string,scoreColumn:string,threshold:number):MetricRow[]{
+  const buckets=new Map<string,Row[]>(); rows.forEach(row=>{const name=row[groupColumn]||"Missing";buckets.set(name,[...(buckets.get(name)??[]),row]);});
+  return [...buckets.entries()].map(([group,groupRows])=>{const scores=groupRows.map(r=>Number(r[scoreColumn])),outcomes=groupRows.map(r=>Number(r[outcomeColumn]));let tp=0,tn=0,fp=0,fn=0;
+    scores.forEach((score,i)=>{const prediction=score>=threshold?1:0;if(prediction&&outcomes[i])tp+=1;else if(prediction)fp+=1;else if(outcomes[i])fn+=1;else tn+=1;});
+    const observed=outcomes.reduce((s,v)=>s+v,0)/groupRows.length,expected=scores.reduce((s,v)=>s+v,0)/groupRows.length;
+    return {group,n:groupRows.length,prevalence:observed,auc:auc(scores,outcomes),sensitivity:tp+fn?tp/(tp+fn):null,specificity:tn+fp?tn/(tn+fp):null,positiveRate:(tp+fp)/groupRows.length,brier:scores.reduce((s,v,i)=>s+(v-outcomes[i])**2,0)/groupRows.length,oeRatio:expected?observed/expected:null};
+  }).sort((a,b)=>a.group.localeCompare(b.group));
+}
+const pct=(value:number|null)=>value==null?"—":`${(value*100).toFixed(1)}%`; const dec=(value:number|null)=>value==null?"—":value.toFixed(2);
+
+function MetricBars({data,metric,label,benchmark}:{data:MetricRow[];metric:keyof MetricRow;label:string;benchmark?:number}){
+  return <div className="chart-card"><div className="chart-heading"><h3>{label}</h3><span>{benchmark?`Review below ${benchmark.toFixed(2)}`:"Higher is better"}</span></div><div className="bars">{data.map((row,index)=>{const value=Number(row[metric]??0);return <div className="bar-row" key={row.group}><span className="bar-label">{row.group}</span><div className="bar-track"><div className="bar-fill" style={{width:`${Math.max(2,value*100)}%`,background:COLORS[index%COLORS.length]}}/></div><strong>{dec(value)}</strong></div>})}</div></div>;
+}
+
+export function FairnessWorkbench(){
+  const initial=useMemo(()=>syntheticRows(),[]),[rows,setRows]=useState<Row[]>(initial),[fileName,setFileName]=useState("cardio_synthetic_demo.csv"),[outcomeColumn,setOutcomeColumn]=useState("outcome"),[scoreColumn,setScoreColumn]=useState("predicted_risk"),[groupColumn,setGroupColumn]=useState("sex"),[threshold,setThreshold]=useState(.2),[error,setError]=useState("");
+  const fileInput=useRef<HTMLInputElement>(null),columns=Object.keys(rows[0]??{}),validRows=rows.filter(row=>[0,1].includes(Number(row[outcomeColumn]))&&Number.isFinite(Number(row[scoreColumn]))&&Number(row[scoreColumn])>=0&&Number(row[scoreColumn])<=1);
+  const data=useMemo(()=>metricsFor(validRows,groupColumn,outcomeColumn,scoreColumn,threshold),[validRows,groupColumn,outcomeColumn,scoreColumn,threshold]);
+  const aucValues=data.map(r=>r.auc).filter((v):v is number=>v!=null),bestAuc=Math.max(...aucValues),worstAuc=Math.min(...aucValues),maxPositive=Math.max(...data.map(r=>r.positiveRate)),minPositive=Math.min(...data.map(r=>r.positiveRate)),parityGap=maxPositive-minPositive;
+  const sensitivityValues=data.map(r=>r.sensitivity).filter((v):v is number=>v!=null),minSensitivity=Math.min(...sensitivityValues),maxSensitivity=Math.max(...sensitivityValues);
+  const flagged=data.filter(r=>(r.auc!=null&&r.auc<.7)||(r.oeRatio!=null&&(r.oeRatio<.8||r.oeRatio>1.2))||r.n<30);
+  async function upload(event:ChangeEvent<HTMLInputElement>){const file=event.target.files?.[0];if(!file)return;try{const parsed=parseCsv(await file.text()),next=Object.keys(parsed[0]);setRows(parsed);setFileName(file.name);setError("");setOutcomeColumn(next.find(n=>/outcome|label|event/i.test(n))??next[0]);setScoreColumn(next.find(n=>/score|risk|prob/i.test(n))??next[Math.min(1,next.length-1)]);setGroupColumn(next.find(n=>/sex|gender|race|group|age/i.test(n))??next[Math.min(2,next.length-1)]);}catch(cause){setError(cause instanceof Error?cause.message:"Unable to read this CSV.");}}
+  function resetDemo(){setRows(initial);setFileName("cardio_synthetic_demo.csv");setOutcomeColumn("outcome");setScoreColumn("predicted_risk");setGroupColumn("sex");setThreshold(.2);setError("");}
+  const disparity=bestAuc-worstAuc;
+  return <main>
+    <header className="site-header"><a className="brand" href="#top"><span className="brand-mark">C</span><span>Cardio Risk Compass</span></a><nav><a href="#audit">Audit</a><a href="#findings">Findings</a><a href="#method">Method</a></nav><span className="research-badge">Research prototype</span></header>
+    <section className="hero" id="top"><div><p className="eyebrow">Clinical model assurance · population-level analysis</p><h1>Find where a risk model <em>fails people.</em></h1><p className="hero-copy">Upload model outputs. Reveal subgroup performance and fairness gaps. Turn statistical evidence into clear, actionable review—before a model influences care.</p><div className="hero-actions"><button className="primary" onClick={()=>fileInput.current?.click()}>Upload patient-level CSV</button><button className="secondary" onClick={resetDemo}>Explore synthetic demo</button></div><p className="privacy-note">Runs in your browser. Uploaded data does not leave this page.</p></div><div className="hero-visual"><div className="pulse-line"/><div className="visual-card one"><span>Lowest sensitivity</span><strong>Women · 65–74</strong><b>−18.4 pts</b></div><div className="visual-card two"><span>Calibration review</span><strong>Older adults</strong><b>O:E 1.31</b></div><div className="visual-card three"><span>Audit status</span><strong>Action required</strong><i>3 signals</i></div></div></section>
+    <section className="workspace" id="audit"><div className="section-intro"><div><p className="eyebrow">Fairness workbench</p><h2>Audit the evidence, not the average.</h2></div><p>Overall model quality can conceal clinically important subgroup failures. Configure the audit, then compare performance, calibration, and classification behavior.</p></div>
+      <div className="control-panel"><input ref={fileInput} className="sr-only" type="file" accept=".csv,text/csv" onChange={upload}/><div className="file-summary"><span className="file-icon">CSV</span><div><strong>{fileName}</strong><small>{rows.length.toLocaleString()} rows · {columns.length} columns · {validRows.length.toLocaleString()} valid</small></div><button onClick={()=>fileInput.current?.click()}>Replace</button></div>{error&&<p className="error" role="alert">{error}</p>}<div className="controls">
+        <label>Observed outcome<select value={outcomeColumn} onChange={e=>setOutcomeColumn(e.target.value)}>{columns.map(c=><option key={c}>{c}</option>)}</select></label><label>Predicted probability<select value={scoreColumn} onChange={e=>setScoreColumn(e.target.value)}>{columns.map(c=><option key={c}>{c}</option>)}</select></label><label>Population subgroup<select value={groupColumn} onChange={e=>setGroupColumn(e.target.value)}>{columns.map(c=><option key={c}>{c}</option>)}</select></label><label>Decision threshold <span>{threshold.toFixed(2)}</span><input type="range" min=".01" max=".8" step=".01" value={threshold} onChange={e=>setThreshold(Number(e.target.value))}/></label>
+      </div></div>
+      <div className="summary-grid"><article><span>Groups evaluated</span><strong>{data.length}</strong><small>{groupColumn.replaceAll("_"," ")}</small></article><article><span>AUC range</span><strong>{dec(worstAuc)}–{dec(bestAuc)}</strong><small className={disparity>.1?"warn":"good"}>{(disparity*100).toFixed(1)} point spread</small></article><article><span>Statistical parity gap</span><strong>{pct(parityGap)}</strong><small className={parityGap>.1?"warn":"good"}>Across positive rates</small></article><article><span>Groups requiring review</span><strong>{flagged.length}</strong><small className={flagged.length?"warn":"good"}>{flagged.length?"Performance or reliability signal":"No preset flags"}</small></article></div>
+      <div className="charts-grid"><MetricBars data={data} metric="auc" label="Discrimination by subgroup (AUC)" benchmark={.7}/><MetricBars data={data} metric="sensitivity" label={`Sensitivity at ${(threshold*100).toFixed(0)}% threshold`}/></div>
+      <div className="table-card"><div className="chart-heading"><h3>Complete subgroup audit</h3><span>Paper-aligned evaluation view</span></div><div className="table-scroll"><table><thead><tr><th>Population</th><th>N</th><th>Prevalence</th><th>AUC</th><th>Sensitivity</th><th>Specificity</th><th>Positive rate</th><th>Brier</th><th>O:E ratio</th></tr></thead><tbody>{data.map((r,i)=><tr key={r.group}><td><span className="dot" style={{background:COLORS[i%COLORS.length]}}/>{r.group}</td><td>{r.n}</td><td>{pct(r.prevalence)}</td><td className={r.auc!=null&&r.auc<.7?"cell-warn":""}>{dec(r.auc)}</td><td>{pct(r.sensitivity)}</td><td>{pct(r.specificity)}</td><td>{pct(r.positiveRate)}</td><td>{dec(r.brier)}</td><td className={r.oeRatio!=null&&(r.oeRatio<.8||r.oeRatio>1.2)?"cell-warn":""}>{dec(r.oeRatio)}</td></tr>)}</tbody></table></div></div>
+    </section>
+    <section className="findings" id="findings"><div className="section-intro light"><div><p className="eyebrow">Clear-language interpretation</p><h2>What the numbers mean.</h2></div><p>Deterministic calculations drive every statement. Language support explains results without changing or inventing the underlying evidence.</p></div><div className="findings-layout"><article className="finding-primary"><span className="severity">Priority finding</span><h3>The model does not perform consistently across {groupColumn.replaceAll("_"," ")} groups.</h3><p>The gap between strongest and weakest discrimination is <strong>{(disparity*100).toFixed(1)} percentage points</strong>. {worstAuc<.7?"At least one group falls below the 0.70 review threshold, indicating limited ability to rank higher-risk people correctly within that population.":"All groups clear the preset threshold, but differences still warrant clinical review."}</p><div className="evidence-line"><span>Evidence</span><code>AUC {dec(worstAuc)}–{dec(bestAuc)}</code><code>n = {validRows.length}</code></div></article><div className="finding-stack"><article><span className="number">01</span><div><h3>Classification disparity</h3><p>Predicted-positive rates differ by {pct(parityGap)}. This is a screening signal, not proof of unlawful bias; prevalence and clinical context matter.</p></div></article><article><span className="number">02</span><div><h3>Unequal case detection</h3><p>Sensitivity varies by {pct(maxSensitivity-minSensitivity)}. Some populations may have a greater chance of a true event being missed.</p></div></article><article><span className="number">03</span><div><h3>Calibration check</h3><p>{data.some(r=>r.oeRatio!=null&&(r.oeRatio<.8||r.oeRatio>1.2))?"Observed and expected event rates diverge materially in at least one group.":"Observed-to-expected ratios remain within the preset review interval."} Review local calibration before use.</p></div></article></div></div></section>
+    <section className="mitigation"><div><p className="eyebrow">From finding to action</p><h2>Test safer alternatives.</h2><p>Fairness cannot be repaired with one switch. Choose and document experiments, then re-evaluate every metric because improving one measure may worsen another.</p></div><div className="action-grid"><article><span>01</span><h3>Recalibrate locally</h3><p>Fit calibration adjustments using representative local data, then compare observed-to-expected ratios.</p><button>Recommended first</button></article><article><span>02</span><h3>Review thresholds</h3><p>Test whether operating thresholds preserve clinically acceptable sensitivity and specificity.</p><button>Simulate impact</button></article><article><span>03</span><h3>Improve representation</h3><p>Assess missing predictors, sampling imbalance, and measurement differences before retraining.</p><button>Data review</button></article></div></section>
+    <section className="method" id="method"><div><p className="eyebrow">Scientific foundation</p><h2>Built from published cardiovascular fairness research.</h2></div><blockquote>“Characterize and quantify the behavior of clinical risk models within specific subpopulations.”</blockquote><p>This prototype operationalizes metrics examined by Kartoun et al. in <em>Prediction performance and fairness heterogeneity in cardiovascular risk models</em>, Scientific Reports 12, 12542 (2022). It supports evaluation and governance; it is not a medical device.</p><a href="https://doi.org/10.1038/s41598-022-16615-3" target="_blank" rel="noreferrer">Read the open-access paper ↗</a></section>
+    <footer><div className="brand"><span className="brand-mark">C</span><span>Cardio Risk Compass</span></div><p>A DBbun research prototype · Synthetic data · No patient data transmitted</p></footer>
+  </main>;
+}
