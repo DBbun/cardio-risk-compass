@@ -21,10 +21,17 @@ Users explicitly choose the privileged/reference and underprivileged/comparison 
 - Observed-to-expected event ratio
 - Subgroup sample size and event prevalence
 - Statistical parity, true-positive-rate, and true-negative-rate differences against a defined reference group
+- False-positive-rate and false-negative-rate differences
+- Positive predictive-value difference
+- Disparate-impact ratio
+- Equalized-odds gap
+- Observed-to-expected calibration difference
 
 Metrics are suppressed when a subgroup contains fewer than 30 records. Missing and unknown attribute values remain visible for data-quality review.
 
 The population-profile view shows normalized histograms for numeric covariates and proportional distributions for categorical covariates and outcomes. Demonstration fields include age, BMI, blood pressure, total and HDL cholesterol, smoking, diabetes, hypertension, blood-pressure treatment, heart failure, prior myocardial infarction, language, deprivation quintile, and rural/urban location.
+
+The in-app CSV guide documents the minimum schema and provides a downloadable full example. Column names are flexible because users explicitly map the observed outcome, predicted probability, fairness attribute, and optional intersection after upload.
 
 ## Scientific foundation
 
