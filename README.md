@@ -31,6 +31,8 @@ Metrics are suppressed when a subgroup contains fewer than 30 records. Missing a
 
 The population-profile view shows normalized histograms for numeric covariates and proportional distributions for categorical covariates and outcomes. Demonstration fields include age, BMI, blood pressure, total and HDL cholesterol, smoking, diabetes, hypertension, blood-pressure treatment, heart failure, prior myocardial infarction, language, deprivation quintile, and rural/urban location.
 
+A dedicated paper-style age analysis reproduces the structure of the publication's figures across the full cohort and five age bands (45–54 through 85–90). It shows observed outcomes per 1,000 with population-size bubbles, age-specific discrimination, calibration, Brier score, and directional statistical-parity, true-positive-rate, and true-negative-rate differences. The synthetic data also includes sex and race population fields for privileged/reference versus comparison-group audits.
+
 The in-app CSV guide documents the minimum schema and provides a downloadable full example. A paginated data viewer lets users inspect the active CSV directly in the browser. Column names are flexible; the tool detects and offers only binary columns for the observed outcome, probability-like columns for the risk score, and categorical population fields for fairness attributes and intersections.
 
 ## Scientific foundation
