@@ -43,7 +43,7 @@ Kartoun U, Khurshid S, Kwon BC, et al. Prediction performance and fairness heter
 
 ## Important limitations
 
-This is an evaluation and governance prototype, not a medical device. Metrics are screening signals that require clinical, statistical, and legal review. Group differences do not by themselves establish unlawful bias or justify patient-level treatment decisions.
+Metrics are screening signals that require clinical, statistical, and governance review. Group differences do not by themselves establish unlawful bias or justify patient-level treatment decisions.
 
 ## Local development
 
