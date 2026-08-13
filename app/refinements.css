@@ -10,3 +10,6 @@
 .age-findings p{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.55}
 .action-tool-buttons button:first-child{background:var(--ink);color:#fff}
 @media(max-width:700px){.range-axis{margin-left:0}.age-findings{grid-template-columns:1fr}}
+.dynamic-advice{display:none;margin:0 clamp(24px,7vw,110px) 35px;padding:18px 22px;background:#fff7df;border-left:4px solid var(--coral)}
+.workspace:has(.work-tabs button:nth-child(5)[aria-selected="true"])~.dynamic-advice{display:block}
+.dynamic-advice strong{font:400 22px Georgia,serif}.dynamic-advice p{margin:8px 0 0;color:var(--muted);line-height:1.55;font-size:12px}
