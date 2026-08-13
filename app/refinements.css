@@ -1,0 +1,12 @@
+.range-note{display:none}
+.range-axis{margin-left:138px;margin-top:-18px}
+.range-axis>strong{display:block;margin-bottom:7px;font-size:10px;color:var(--muted);text-transform:capitalize}
+.range-axis>div{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.range-axis span{text-align:center;font:9px var(--font-geist-mono);color:#53635e}
+.age-findings{display:none;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.workspace:has(.work-tabs button:nth-child(3)[aria-selected="true"]) .age-findings{display:grid}
+.age-findings article{background:#fff;border-left:4px solid var(--coral);padding:17px}
+.age-findings strong{font:400 20px Georgia,serif}
+.age-findings p{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.55}
+.action-tool-buttons button:first-child{background:var(--ink);color:#fff}
+@media(max-width:700px){.range-axis{margin-left:0}.age-findings{grid-template-columns:1fr}}
