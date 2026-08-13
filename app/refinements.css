@@ -1,4 +1,5 @@
 .range-note{display:none}
+.competition-banner{display:flex;align-items:center;justify-content:center;gap:12px;padding:11px clamp(22px,5vw,78px);background:var(--ink);color:#eef5f2;font-size:12px;letter-spacing:.01em}.competition-banner strong{color:#fff}.competition-banner b{font:400 20px Georgia,serif}.competition-banner b em{color:var(--coral)}.competition-banner a{color:#fff;font-weight:700}
 .profile-card .profile-heading{grid-template-columns:minmax(0,1fr) 260px}.profile-card .profile-heading h3{overflow-wrap:anywhere;line-height:1.15}.profile-card .profile-row{grid-template-columns:220px minmax(0,1fr)}.profile-card .profile-row>strong{line-height:1.45}.profile-card .profile-row>strong small{overflow-wrap:anywhere}.range-axis{margin-left:238px;margin-top:10px;padding-top:9px;border-top:1px solid #e3e7e4}
 .range-axis>strong{display:block;margin-bottom:7px;font-size:10px;color:var(--muted);text-transform:capitalize}
 .range-axis>div{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
@@ -9,7 +10,7 @@
 .age-findings strong{font:400 20px Georgia,serif}
 .age-findings p{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.55}
 .action-tool-buttons button.active{background:var(--ink);color:#fff}
-@media(max-width:900px){.profile-card .profile-heading{grid-template-columns:1fr}.profile-card .profile-row{grid-template-columns:180px minmax(0,1fr)}.range-axis{margin-left:198px}}@media(max-width:700px){.profile-card .profile-row{grid-template-columns:1fr}.range-axis{margin-left:0}.age-findings{grid-template-columns:1fr}}
+@media(max-width:900px){.competition-banner{flex-wrap:wrap;gap:6px 10px}.profile-card .profile-heading{grid-template-columns:1fr}.profile-card .profile-row{grid-template-columns:180px minmax(0,1fr)}.range-axis{margin-left:198px}}@media(max-width:700px){.competition-banner{justify-content:flex-start}.profile-card .profile-row{grid-template-columns:1fr}.range-axis{margin-left:0}.age-findings{grid-template-columns:1fr}}
 .dynamic-advice{display:none;margin:0 clamp(24px,7vw,110px) 35px;padding:18px 22px;background:#fff7df;border-left:4px solid var(--coral)}
 .workspace:has(.work-tabs button:nth-child(5)[aria-selected="true"])~.dynamic-advice{display:block}
 .dynamic-advice strong{font:400 22px Georgia,serif}.dynamic-advice p{margin:8px 0 0;color:var(--muted);line-height:1.55;font-size:12px}
