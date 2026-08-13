@@ -1,64 +1,120 @@
 # Cardio Risk Compass
 
-Cardio Risk Compass is a browser-based research prototype for auditing clinical risk-model performance and fairness across patient populations.
+**Find where a cardiovascular risk model performs differently across patient populations—before those differences influence care.**
 
-**Live application:** https://dbbun.github.io/cardio-risk-compass/
+[Try the live browser demo](https://dbbun.github.io/cardio-risk-compass/) · [Read the scientific foundation](https://doi.org/10.1038/s41598-022-16615-3)
 
-It accepts patient-level CSV files, calculates deterministic subgroup metrics, presents paper-inspired comparisons, explains potential reliability and fairness concerns in clear language, and suggests mitigation experiments.
+![Cardio Risk Compass showing population-specific cardiovascular risk assessment](public/og.png)
 
-## CSV format
+Cardio Risk Compass is a browser-based model-assurance workbench developed by [DBbun](https://github.com/DBbun). It analyzes patient-level model outputs across populations, explains performance and fairness findings in clinical language, and turns those findings into concrete review tasks.
 
-The application expects one binary observed-outcome column (`0` or `1`), one predicted-probability column (between `0` and `1`), and one or more population columns such as sex, age band, race, or pre-existing disease. A reproducible synthetic cardiovascular dataset with 100,000 patients is loaded automatically. It includes paired 5-year atrial-fibrillation/CHARGE-AF and 10-year atherosclerotic-cardiovascular-disease/Pooled-Cohort-Equations demonstrations.
+The public demonstration uses a reproducible **100,000-patient synthetic cohort**. Its results illustrate the workflow and are not clinical evidence. Uploaded CSV files are processed locally in the visitor's browser and are not transmitted by the application.
 
-Users explicitly choose the privileged/reference and underprivileged/comparison populations. Directional gaps are calculated as `comparison - reference`. Attributes can include race or ethnicity, sex or gender, age, comorbidity, poverty or deprivation, geography, and native-English language status. A second attribute can be added for intersectional analysis.
+## Why it matters
 
-## Metrics
+A model can appear acceptable overall while behaving differently within populations defined by age, sex, race, language, location, socioeconomic deprivation, or clinical history. Cardio Risk Compass helps a healthcare team distinguish among:
 
-- Area under the ROC curve (AUC / concordance)
-- Sensitivity and specificity at a configurable threshold
-- Predicted-positive rate and statistical parity gap
+- weak ranking performance;
+- population-specific underprediction or overprediction;
+- missed cases or unnecessary alerts created by a shared decision threshold;
+- data-quality, representation, and small-sample concerns.
+
+In the synthetic demonstration, pooled discrimination is higher than discrimination within every age band. The largest sex-related classification differences concentrate in ages 65–74, while the displayed race-related differences remain comparatively small. These are deliberately visible demonstration findings, not claims about real patients.
+
+## What the tool does
+
+1. Loads the built-in demonstration or a patient-level CSV.
+2. Pairs a binary clinical outcome with its predicted-risk score.
+3. Defines the patient characteristic, reference population, and comparison population.
+4. Optionally combines a second characteristic for intersectional analysis.
+5. Applies a configurable risk threshold.
+6. Displays population distributions, age-stratified performance, fairness measures, 95% confidence intervals, and responsive recommendations.
+
+The demonstration includes:
+
+- **Atrial fibrillation:** five-year observed outcome with CHARGE-AF predicted risk.
+- **Atherosclerotic cardiovascular disease:** ten-year observed outcome with Pooled Cohort Equations predicted risk.
+
+## CSV structure
+
+Users do not need to memorize a fixed schema. The in-app guide explains the required columns, provides a downloadable example, and classifies compatible columns automatically.
+
+At minimum, a CSV needs:
+
+| Column role | Required values | Example |
+|---|---|---|
+| Observed outcome | Binary `0` or `1` | `af_5yr_outcome` |
+| Predicted probability | Numeric value from `0` to `1` | `charge_af_risk` |
+| Population characteristic | Categorical population values | `sex`, `race`, `native_english` |
+
+Optional covariates can include age, age band, body mass index, blood pressure, cholesterol, smoking, diabetes, hypertension, treatment status, heart failure, prior myocardial infarction, deprivation, and location. Missing or unknown population values remain visible for data-quality review.
+
+## Measures reported
+
+### Model performance and reliability
+
+- Area under the receiver operating characteristic curve (AUC)
+- Sensitivity and specificity
 - Brier score
-- Observed-to-expected event ratio
-- Subgroup sample size and event prevalence
-- Statistical parity, true-positive-rate, and true-negative-rate differences against a defined reference group
-- False-positive-rate and false-negative-rate differences
+- Observed-to-expected outcome ratio
+- Outcome prevalence and model-positive rate
+- Positive predictive value
+- False-positive and false-negative rates
+
+### Directional fairness measures
+
+Directional differences are calculated as **comparison population minus reference population**.
+
+- Statistical parity difference
+- True-positive-rate difference
+- True-negative-rate difference
+- False-positive-rate difference
+- False-negative-rate difference
 - Positive predictive-value difference
 - Disparate-impact ratio
 - Equalized-odds gap
 - Observed-to-expected calibration difference
 
-Metrics are suppressed when a subgroup contains fewer than 30 records. Missing and unknown attribute values remain visible for data-quality review.
+Metrics are suppressed for populations with fewer than 30 records. Applicable chart estimates include 95% confidence intervals. A difference is a review signal—not proof of discrimination—and must be interpreted with prevalence, uncertainty, data quality, and clinical consequences.
 
-The results view separates overall model-quality rules (AUC below 0.70, observed-to-expected calibration outside 0.80–1.20, or subgroup n below 30) from between-population fairness rules (absolute sensitivity, positive-rate, or false-positive-rate differences of at least 10 percentage points). It also identifies when similar discrimination but divergent calibration interacts with a shared decision threshold to create classification disparities. Threshold warnings are audit prompts, not clinical recommendations.
+## From measurement to action
 
-The population-profile view shows normalized histograms for numeric covariates and proportional distributions for categorical covariates and outcomes. Demonstration fields include age, BMI, blood pressure, total and HDL cholesterol, smoking, diabetes, hypertension, blood-pressure treatment, heart failure, prior myocardial infarction, language, deprivation quintile, and rural/urban location.
+Recommendations respond to the selected endpoint, population comparison, reference population, intersection, and threshold. The tool guides users through:
 
-A tabbed workflow separates setup, population distributions, paper-style age analysis, fairness results, and recommendations. The age analysis reproduces the structure of the publication's figures across the full cohort and five age bands (45–54 through 85–90). It shows observed outcomes per 1,000 with population-size bubbles, age-specific discrimination, calibration, Brier score, and directional statistical-parity, true-positive-rate, and true-negative-rate differences. Applicable chart estimates include 95% confidence intervals. Every chart includes a plain-language interpretation and clinical-governance caution. The synthetic data also includes sex and race population fields for reference-versus-comparison audits.
-
-The in-app CSV guide documents the minimum schema and provides a downloadable full example. A paginated data viewer lets users inspect the active CSV directly in the browser. Column names are flexible; the tool detects and offers only binary columns for the observed outcome, probability-like columns for the risk score, and categorical population fields for fairness attributes and intersections.
+- local recalibration review;
+- threshold-impact simulation;
+- missingness and representation checks;
+- targeted review of age bands where a disparity concentrates;
+- reassessment after recalibration, threshold changes, or retraining.
 
 ## Scientific foundation
 
-Kartoun U, Khurshid S, Kwon BC, et al. Prediction performance and fairness heterogeneity in cardiovascular risk models. *Scientific Reports*. 2022;12:12542. https://doi.org/10.1038/s41598-022-16615-3
+Kartoun U, Khurshid S, Kwon BC, et al. [Prediction performance and fairness heterogeneity in cardiovascular risk models](https://doi.org/10.1038/s41598-022-16615-3). *Scientific Reports*. 2022;12:12542.
 
-## Important limitations
+The publication evaluated CHARGE-AF and Pooled Cohort Equations performance across clinically relevant subpopulations in three large datasets. Cardio Risk Compass adapts that measurement approach into an interactive model-assurance workflow.
 
-Metrics are screening signals that require clinical, statistical, and governance review. Group differences do not by themselves establish unlawful bias or justify patient-level treatment decisions.
+## Run locally
 
-## Local development
+Requirements: Node.js 22.13 or later.
 
 ```bash
 npm install
 npm run dev
 ```
 
-For the static GitHub Pages build:
+Build and preview the static GitHub Pages version:
 
 ```bash
 npm run build:pages
 npm run preview:pages
 ```
 
-Every push to `main` deploys the browser-only application through GitHub Actions. CSV processing and analysis remain entirely in the visitor's browser.
+Every push to `main` deploys the browser-only application through GitHub Actions.
 
-Copyright DBbun LLC. A public-use license will be selected before release.
+## Limitations
+
+Cardio Risk Compass supports model evaluation and governance. Its metrics and recommendations do not establish causation, prove unlawful bias, or determine patient-level treatment. Real-world use requires representative local data, clinical review, statistical validation, and appropriate governance.
+
+## License
+
+Copyright © 2026 DBbun LLC. All rights reserved. See [LICENSE](LICENSE). Public visibility of this repository does not grant permission to copy, modify, distribute, sublicense, or use the software except as permitted by applicable law or a separate written agreement.
