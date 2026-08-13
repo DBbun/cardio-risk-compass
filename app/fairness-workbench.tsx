@@ -12,7 +12,7 @@ function syntheticRows():Row[] {
   for(let i=0;i<100000;i+=1){
     const sex=random()<.526?"Female":"Male",ageDraw=random(),ageBand=ageDraw<.19?"45-54":ageDraw<.45?"55-64":ageDraw<.72?"65-74":ageDraw<.91?"75-84":"85-90",ageBase={"45-54":45,"55-64":55,"65-74":65,"75-84":75,"85-90":85}[ageBand],age=ageBase+Math.floor(random()*(ageBand==="85-90"?6:10)),race=random()<(sex==="Female"?.19:.16)?"Black":"White";
     const diabetes=random()<(.08+(age-45)*.004+(race==="Black"?.055:0))?1:0,hypertension=random()<(.18+(age-45)*.009+(race==="Black"?.08:0))?1:0,smoker=random()<Math.max(.08,.25-(age-45)*.003)?1:0,heartFailure=random()<(.025+(age-45)*.003)?1:0,priorMi=random()<(.02+(age-45)*.0025+(sex==="Male"?.025:0))?1:0;
-    const sbp=Math.round(112+(age-45)*.52+hypertension*17+(random()-.5)*22),dbp=Math.round(68+(random()-.5)*18),bmi=Number((23+(random()*9)+diabetes*2).toFixed(1));
+    const sbp=Math.round(112+(age-45)*.52+hypertension*17+(random()-.5)*22),dbp=Math.round(68+(random()-.5)*18),bmiNoise=(random()+random()+random()+random()+random()+random()-3)*5.2,bmi=Number(Math.min(46,Math.max(16,26.8+bmiNoise+diabetes*1.6)).toFixed(1));
     const totalCholesterol=Math.round(158+random()*95+smoker*12),hdl=Math.round(38+random()*34-(diabetes*4)),treatedBp=hypertension&&random()<.73?1:0;
     const afTrueRisk=Math.min(.78,Math.max(.01,.018+(age-45)*.008+diabetes*.055+hypertension*.07+heartFailure*.16+priorMi*.07));
     const ascvdTrueRisk=Math.min(.82,Math.max(.015,.02+(age-45)*.007+diabetes*.095+hypertension*.065+smoker*.095+priorMi*.13+(totalCholesterol-180)*.0008));
