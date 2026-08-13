@@ -1,0 +1,5 @@
+.findings,.mitigation,.method{display:none}
+.workspace:has(.work-tabs button:nth-child(5)[aria-selected="true"])~.findings,
+.workspace:has(.work-tabs button:nth-child(5)[aria-selected="true"])~.mitigation{display:block}
+.workspace:has(.work-tabs button:nth-child(5)[aria-selected="true"])~.method{display:grid}
+@media(max-width:900px){.work-tabs{grid-template-columns:1fr 1fr}.work-tabs button:last-child{grid-column:1/-1}}
