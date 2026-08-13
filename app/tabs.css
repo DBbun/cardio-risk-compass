@@ -3,3 +3,4 @@
 .workspace:has(.work-tabs button:nth-child(5)[aria-selected="true"])~.mitigation{display:block}
 .workspace:has(.work-tabs button:nth-child(5)[aria-selected="true"])~.method{display:grid}
 @media(max-width:900px){.work-tabs{grid-template-columns:1fr 1fr}.work-tabs button:last-child{grid-column:1/-1}}
+.bubble-column:first-child .bubble-space i{width:70px!important;height:70px!important}.bubble-column:not(:first-child) .bubble-space i{width:32px!important;height:32px!important}
